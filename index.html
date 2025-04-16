@@ -7,8 +7,8 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
       background: #f5f5f5;
+      padding: 20px;
     }
     .container {
       background: white;
@@ -18,18 +18,13 @@
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    input, textarea, select, button {
+    input, select, textarea, button {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 16px;
-    }
-    img {
-      width: 100%;
-      border-radius: 10px;
-      margin-bottom: 15px;
     }
     button {
       background-color: #28a745;
@@ -40,63 +35,94 @@
     button:hover {
       background-color: #218838;
     }
+    .message {
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="https://via.placeholder.com/400x400.png?text=سروال+تركي" alt="صورة سروال تركي">
+    <img src="https://via.placeholder.com/400x400.png?text=سروال+تركي" alt="صورة سروال تركي" style="width:100%; border-radius:10px;">
     <h2>سروال تركي</h2>
 
     <input type="text" id="fullname" placeholder="الاسم الكامل" required>
-    <input type="tel" id="phone" placeholder="رقم الهاتف" required>
-    <input type="number" id="quantity" placeholder="الكمية" min="1" value="1" required>
-    <textarea id="notes" placeholder="الملاحظات (ألوان، مقاسات...)" rows="3"></textarea>
-
-    <select id="state">
+    <input type="text" id="phone" placeholder="رقم الهاتف" required>
+    <input type="number" id="quantity" placeholder="الكمية" min="1" required>
+    <textarea id="notes" placeholder="الملاحظات (ألوان، مقاس...)" rows="3"></textarea>
+    
+    <select id="state" required>
       <option value="">اختر الولاية</option>
       <option value="الجزائر">الجزائر</option>
       <option value="وهران">وهران</option>
       <option value="سطيف">سطيف</option>
-      <option value="قسنطينة">قسنطينة</option>
-      <!-- أضف المزيد حسب الحاجة -->
+      <!-- أضف باقي الولايات حسب حاجتك -->
     </select>
 
     <input type="text" id="commune" placeholder="البلدية" required>
 
-    <button onclick="submitOrder()">إرسال الطلب</button>
+    <button onclick="submitForm()">إرسال الطلب</button>
 
-    <p id="response" style="text-align:center; margin-top:10px;"></p>
+    <div class="message" id="message"></div>
   </div>
 
   <script>
-    function submitOrder() {
-      const data = {
-        fullname: document.getElementById("fullname").value,
-        phone: document.getElementById("phone").value,
-        quantity: document.getElementById("quantity").value,
-        notes: document.getElementById("notes").value,
-        state: document.getElementById("state").value,
-        commune: document.getElementById("commune").value
-      };
+    const scriptURL = "https://script.google.com/macros/s/AKfycbyA_0zCphW-8cLHUVDh9FTZidobtSjM6AUooInoHfBjpvm-M4aienE3zwa3z1idUd8s/exec";
 
-      fetch("https://script.google.com/macros/s/AKfycbyA_0zCphW-8cLHUVDh9FTZidobtSjM6AUooInoHfBjpvm-M4aienE3zwa3z1idUd8s/exec", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json"
-        }
+    function isValidAlgerianPhone(phone) {
+      const pattern = /^(0)(5|6|7)[0-9]{8}$/;
+      return pattern.test(phone);
+    }
+
+    function submitForm() {
+      const fullname = document.getElementById("fullname").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const quantity = document.getElementById("quantity").value.trim();
+      const notes = document.getElementById("notes").value.trim();
+      const state = document.getElementById("state").value;
+      const commune = document.getElementById("commune").value.trim();
+      const messageDiv = document.getElementById("message");
+
+      // التحقق من رقم الهاتف
+      if (!isValidAlgerianPhone(phone)) {
+        messageDiv.textContent = "❌ يرجى إدخال رقم هاتف جزائري صحيح.";
+        messageDiv.style.color = "red";
+        return;
+      }
+
+      // إرسال البيانات
+      fetch(scriptURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullname,
+          phone,
+          quantity,
+          notes,
+          state,
+          commune
+        })
       })
       .then(response => response.json())
-      .then(res => {
-        if (res.result === "success") {
-          document.getElementById("response").innerText = "✅ تم إرسال الطلب بنجاح!";
+      .then(result => {
+        if (result.result === "success") {
+          messageDiv.textContent = "✅ تم إرسال الطلب بنجاح!";
+          messageDiv.style.color = "green";
+          document.getElementById("fullname").value = "";
+          document.getElementById("phone").value = "";
+          document.getElementById("quantity").value = "";
+          document.getElementById("notes").value = "";
+          document.getElementById("state").value = "";
+          document.getElementById("commune").value = "";
         } else {
-          document.getElementById("response").innerText = "❌ حدث خطأ أثناء الإرسال.";
+          throw new Error("خطأ في الخادم");
         }
       })
       .catch(error => {
-        document.getElementById("response").innerText = "⚠️ فشل في الاتصال بالخادم.";
-        console.error("خطأ:", error);
+        console.error("Error:", error);
+        messageDiv.textContent = "❌ فشل الاتصال بالخادم. حاول مرة أخرى.";
+        messageDiv.style.color = "red";
       });
     }
   </script>
