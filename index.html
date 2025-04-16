@@ -46,71 +46,58 @@
   <div class="container">
     <img src="https://via.placeholder.com/400x400.png?text=سروال+تركي" alt="صورة سروال تركي">
     <h2>سروال تركي</h2>
-    
-    <input type="number" id="quantity" placeholder="الكمية" min="1" value="1" />
-    <textarea id="notes" placeholder="ملاحظات (مثل اللون أو المقاس)"></textarea>
-    <input type="text" id="fullname" placeholder="الاسم الكامل" />
-    <input type="tel" id="phone" placeholder="رقم الهاتف" />
-    
+
+    <input type="text" id="fullname" placeholder="الاسم الكامل" required>
+    <input type="tel" id="phone" placeholder="رقم الهاتف" required>
+    <input type="number" id="quantity" placeholder="الكمية" min="1" value="1" required>
+    <textarea id="notes" placeholder="الملاحظات (ألوان، مقاسات...)" rows="3"></textarea>
+
     <select id="state">
       <option value="">اختر الولاية</option>
       <option value="الجزائر">الجزائر</option>
       <option value="وهران">وهران</option>
-      <option value="قسنطينة">قسنطينة</option>
       <option value="سطيف">سطيف</option>
-      <!-- أضف باقي الولايات هنا -->
+      <option value="قسنطينة">قسنطينة</option>
+      <!-- أضف المزيد حسب الحاجة -->
     </select>
-    
-    <input type="text" id="commune" placeholder="البلدية" />
-    
-    <button onclick="submitForm()">إرسال الطلب</button>
-    
-    <p id="status" style="text-align: center; color: green;"></p>
+
+    <input type="text" id="commune" placeholder="البلدية" required>
+
+    <button onclick="submitOrder()">إرسال الطلب</button>
+
+    <p id="response" style="text-align:center; margin-top:10px;"></p>
   </div>
 
   <script>
-    async function submitForm() {
-      const quantity = document.getElementById("quantity").value;
-      const notes = document.getElementById("notes").value;
-      const fullname = document.getElementById("fullname").value;
-      const phone = document.getElementById("phone").value;
-      const state = document.getElementById("state").value;
-      const commune = document.getElementById("commune").value;
-      const status = document.getElementById("status");
-
-      if (!fullname || !phone || !state || !commune) {
-        alert("يرجى ملء جميع الحقول المطلوبة.");
-        return;
-      }
-
-      const formData = {
-        quantity,
-        notes,
-        fullname,
-        phone,
-        state,
-        commune
+    function submitOrder() {
+      const data = {
+        fullname: document.getElementById("fullname").value,
+        phone: document.getElementById("phone").value,
+        quantity: document.getElementById("quantity").value,
+        notes: document.getElementById("notes").value,
+        state: document.getElementById("state").value,
+        commune: document.getElementById("commune").value
       };
 
-      try {
-        const response = await fetch("https://script.google.com/macros/s/AKfycbyA_0zCphW-8cLHUVDh9FTZidobtSjM6AUooInoHfBjpvm-M4aienE3zwa3z1idUd8s/exec", {
-          method: "POST",
-          body: JSON.stringify(formData),
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
-
-        const result = await response.json();
-        if (result.result === "success") {
-          status.textContent = "تم إرسال الطلب بنجاح!";
-        } else {
-          status.textContent = "حدث خطأ. حاول مرة أخرى.";
+      fetch("https://script.google.com/macros/s/AKfycbyA_0zCphW-8cLHUVDh9FTZidobtSjM6AUooInoHfBjpvm-M4aienE3zwa3z1idUd8s/exec", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json"
         }
-      } catch (error) {
-        console.error(error);
-        status.textContent = "فشل الإرسال. تحقق من الاتصال.";
-      }
+      })
+      .then(response => response.json())
+      .then(res => {
+        if (res.result === "success") {
+          document.getElementById("response").innerText = "✅ تم إرسال الطلب بنجاح!";
+        } else {
+          document.getElementById("response").innerText = "❌ حدث خطأ أثناء الإرسال.";
+        }
+      })
+      .catch(error => {
+        document.getElementById("response").innerText = "⚠️ فشل في الاتصال بالخادم.";
+        console.error("خطأ:", error);
+      });
     }
   </script>
 </body>
